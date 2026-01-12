@@ -1,16 +1,20 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
+import { useQuery } from '@tanstack/react-query'; 
+import { loginAPI, registerAPI, fetchProductsAPI } from '../services/fetch';
 
 const ShopContext = createContext();
 
-// YOUR BACKEND URL
-const API_URL = "https://rayawclothing-backend.onrender.com"; 
-
 export const ShopProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [products, setProducts] = useState([]);
   const [cart, setCart] = useState([]);
   const [notification, setNotification] = useState(null); 
+
+  // --- TANSTACK QUERY: AUTOMATIC PRODUCT FETCHING ---
+  const { data: products = [] } = useQuery({
+    queryKey: ['products'],
+    queryFn: fetchProductsAPI,
+    staleTime: 1000 * 60 * 5, 
+  });
 
   // Notification Helper
   const showNotification = (message, type = 'success') => {
@@ -18,6 +22,7 @@ export const ShopProvider = ({ children }) => {
     setTimeout(() => setNotification(null), 3000); 
   };
 
+  // Load User from LocalStorage on startup
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
@@ -29,31 +34,35 @@ export const ShopProvider = ({ children }) => {
     }
   }, []);
 
-  // --- LOGIN FUNCTION ---
+  // --- LOGIN FUNCTION (UPDATED: CATCH-ALL NAME FIX) ---
   const login = async (email, password) => {
     try {
-      const response = await axios.post(`${API_URL}/login`, { email, password });
-      
-      if (response.status === 200) {
-        let userData = response.data.user || response.data;
+      const data = await loginAPI(email, password);
+      let userData = data.user || data;
 
-        // STRICT CHECK: If data is missing or doesn't have a name, FORCE "Customer"
-        if (!userData || !userData.first_name) {
-          userData = {
-            first_name: "Customer", 
-            email: email,
-            token: "valid-session"
-          };
-        }
+      // Debugging: See exactly what the backend sends in the console
+      console.log("Login Response Data:", userData);
 
-        setUser(userData);
-        localStorage.setItem('user', JSON.stringify(userData));
-        showNotification(`Welcome back!`, "success");
-        return true;
-      }
+      // CHECK ALL POSSIBLE SPELLINGS
+      // We check 'first_name', then 'firstName', then 'name', etc.
+      const userName = 
+        userData.first_name || 
+        userData.firstName || 
+        userData.name || 
+        userData.user_name || 
+        "Customer"; 
+
+      // Update the object with the correct standardized name
+      userData = { ...userData, first_name: userName };
+
+      setUser(userData);
+      localStorage.setItem('user', JSON.stringify(userData));
+      showNotification(`Welcome back, ${userData.first_name}!`, "success");
+      return true;
     } catch (error) {
-      console.error("Login Failed:", error);
-      showNotification("Invalid email or password", "error");
+      console.error("Login Failed:", error.response);
+      const msg = error.response?.data?.error || "Invalid email or password";
+      showNotification(msg, "error");
       return false;
     }
   };
@@ -61,27 +70,22 @@ export const ShopProvider = ({ children }) => {
   // --- REGISTER FUNCTION ---
   const register = async (userData) => {
     try {
-      const response = await axios.post(`${API_URL}/signup`, userData);
-      
-      if (response.status === 200 || response.status === 201) {
-        
-        let newUserData = response.data.user || response.data;
+      const data = await registerAPI(userData);
+      let newUserData = data.user || data;
 
-        // STRICT CHECK: If backend sends just a message (no name), FORCE "Customer"
-        if (!newUserData || !newUserData.first_name) {
-          newUserData = {
-            first_name: "Customer", // Forces "Customer" to appear
-            email: userData.email,
-            phone: userData.phone,
-            token: "valid-session"
-          };
-        }
+      // Force name from form data (Frontend Override)
+      newUserData = {
+        ...newUserData,
+        first_name: userData.first_name,
+        last_name: userData.last_name,
+        email: userData.email,
+        phone: userData.phone
+      };
 
-        setUser(newUserData);
-        localStorage.setItem('user', JSON.stringify(newUserData));
-        showNotification("Account created successfully!", "success");
-        return true;
-      }
+      setUser(newUserData);
+      localStorage.setItem('user', JSON.stringify(newUserData));
+      showNotification("Account created successfully!", "success");
+      return true;
     } catch (error) {
       const rawMsg = error.response?.data?.error || "";
       if (rawMsg.includes("duplicate")) {
@@ -93,21 +97,22 @@ export const ShopProvider = ({ children }) => {
     }
   };
 
+  // --- UPDATE PROFILE FUNCTION ---
+  const updateUserProfile = (updatedData) => {
+    const newUser = { ...user, ...updatedData };
+    setUser(newUser);
+    localStorage.setItem('user', JSON.stringify(newUser));
+    showNotification("Profile updated successfully!", "success");
+  };
+
+  // --- LOGOUT FUNCTION ---
   const logout = () => {
     setUser(null);
     localStorage.removeItem('user');
     showNotification("Logged out successfully.", "success");
   };
 
-  // --- PRODUCTS & CART ---
-  const fetchProducts = async () => {
-    try {
-      const response = await axios.get(`${API_URL}/products`);
-      setProducts(response.data);
-    } catch (err) { console.error(err); }
-  };
-  useEffect(() => { fetchProducts(); }, []);
-
+  // --- CART LOGIC ---
   const addToCart = (product, size) => {
     setCart((prev) => {
       const exists = prev.find(item => item.id === product.id && item.size === size);
@@ -126,8 +131,9 @@ export const ShopProvider = ({ children }) => {
 
   return (
     <ShopContext.Provider value={{ 
-      user, register, login, logout, 
-      products, cart, addToCart, removeFromCart, updateQuantity, 
+      user, register, login, logout, updateUserProfile,
+      products, 
+      cart, addToCart, removeFromCart, updateQuantity, 
       getCartCount, getTotalPrice, clearCart, notification 
     }}>
       {children}
