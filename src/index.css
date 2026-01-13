@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Optional: Set the dark background globally here to be sure */
+
 body {
   background-color: #1E1E1E;
   color: white;

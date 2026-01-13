@@ -1,20 +1,26 @@
-// src/pages/HomePage.jsx
 import { useState } from 'react';
-import { Search, ChevronDown } from 'lucide-react'; // <--- Added ChevronDown
+import { Search, ChevronDown } from 'lucide-react'; 
 import Hero from '../components/Hero';
 import ProductCard from '../components/ProductCard';
-import { useShop } from '../context/shopcontext';
+// Ensure this points to the file you created: MyShopContext or ShopContext
+import { useShop } from '../context/MyShopContext'; 
 
 export default function HomePage() {
-  const { products } = useShop(); 
+  // Added pagination tools from context
+  const { products, fetchNextPage, hasNextPage, isFetchingNextPage } = useShop(); 
   const [searchTerm, setSearchTerm] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [activeCategory, setActiveCategory] = useState("All");
 
-  // FILTERING LOGIC
+  // --- THE FIX: SAFE FILTERING ---
   const filteredProducts = products.filter(product => {
+    // 1. Safety Guard: If product or name is missing, skip it (Stops the crash)
+    if (!product || !product.name) return false;
+
+    // 2. Original Logic
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = activeCategory === "All" || (product.category === activeCategory) || (!product.category && activeCategory === "All");
+    
     return matchesSearch && matchesCategory;
   });
 
@@ -24,7 +30,7 @@ export default function HomePage() {
 
       <main className="max-w-7xl mx-auto px-6">
         
-        {/* Search & Filter Section */}
+        {/* Search & Filter Section (Your Original Design) */}
         <div className="flex flex-col md:flex-row gap-3 mb-8 items-center">
           
           {/* 1. Search Bar */}
@@ -53,7 +59,7 @@ export default function HomePage() {
               {/* Text */}
               <span className="capitalize font-medium">{activeCategory}</span>
 
-              {/* Right Icon (Arrow) - Rotates when open */}
+              {/* Right Icon (Arrow) */}
               <ChevronDown 
                 size={16} 
                 className={`text-gray-400 transition-transform duration-200 ${showFilters ? 'rotate-180' : ''}`} 
@@ -86,10 +92,23 @@ export default function HomePage() {
             ))
           ) : (
             <div className="w-full text-center text-gray-500 py-20">
-              No products found matching "{searchTerm}"
+              No products found matching {searchTerm}
             </div>
           )}
         </div>
+
+        {/* LOAD MORE BUTTON (Needed for Infinite Scroll) */}
+        {hasNextPage && (
+          <div className="flex justify-center mt-12">
+            <button 
+              onClick={() => fetchNextPage()} 
+              disabled={isFetchingNextPage}
+              className="px-8 py-3 bg-white text-black font-bold rounded-full hover:bg-gray-200 transition disabled:opacity-50"
+            >
+              {isFetchingNextPage ? 'Loading more...' : 'Load More'}
+            </button>
+          </div>
+        )}
 
       </main>
     </div>

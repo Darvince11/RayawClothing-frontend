@@ -1,6 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
 import { CheckCircle, AlertCircle } from 'lucide-react';
-import { useShop } from './context/ShopContext'; 
+import { useShop } from './context/MyShopContext'; 
 
 import MainLayout from './layouts/MainLayout';
 import HomePage from './pages/HomePage';
@@ -33,7 +33,6 @@ function App() {
       <GlobalNotification />
       
       <Routes>
-        {/* Main Layout (Navbar + Content) */}
         <Route path="/" element={<MainLayout />}>
           <Route index element={<HomePage />} />
           <Route path="product/:id" element={<ProductDetailsPage />} />

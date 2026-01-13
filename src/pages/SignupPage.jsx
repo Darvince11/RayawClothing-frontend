@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { User, Mail, Lock, Phone, ArrowRight, Loader2 } from 'lucide-react';
-import { useShop } from '../context/ShopContext';
+import { useShop } from '../context/MyShopContext';
 
 export default function SignupPage() {
   const { register } = useShop(); 

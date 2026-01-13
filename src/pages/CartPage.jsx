@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom'; // <--- Added useNavigate
 import { Trash2, Plus, Minus, ArrowRight, CreditCard, Smartphone, CheckCircle, Printer, ArrowLeft } from 'lucide-react'; // <--- Added ArrowLeft
-import { useShop } from '../context/shopcontext';
+import { useShop } from '../context/MyShopContext';
 import logo from '../assets/logo.png';
 
 export default function CartPage() {
