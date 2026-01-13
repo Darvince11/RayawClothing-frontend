@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, ShoppingBag, Heart, AlertCircle, CheckCircle } from 'lucide-react';
-import { useShop } from '../context/shopcontext'; 
+import { useShop } from '../context/MyShopContext'; 
 
 export default function ProductDetailsPage() {
   const { id } = useParams();

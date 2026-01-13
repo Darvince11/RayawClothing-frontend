@@ -5,7 +5,7 @@ import './index.css';
 
 // 1. Import all the providers
 import { BrowserRouter } from 'react-router-dom';
-import { ShopProvider } from './context/shopcontext';
+import { ShopProvider } from './context/MyShopContext.jsx';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // 2. Create the Query Client
@@ -16,8 +16,13 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     {/* Layer 1: TanStack Query */}
     <QueryClientProvider client={queryClient}>
       
-      {/* Layer 2: Router */}
-      <BrowserRouter>
+      {/* Layer 2: Router (Updated with Future Flags) */}
+      <BrowserRouter
+        future={{
+          v7_startTransition: true,
+          v7_relativeSplatPath: true,
+        }}
+      >
         
         {/* Layer 3: Shop Data */}
         <ShopProvider>

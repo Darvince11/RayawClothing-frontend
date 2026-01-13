@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { ShoppingBag, Home, Menu, X, LogOut, User as UserIcon, ChevronDown, Settings } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import logo from '../assets/logo.png';
-import { useShop } from '../context/ShopContext'; 
+import { useShop } from '../context/MyShopContext'; // Updated
 import EditProfileModal from './EditProfileModal'; 
 
 export default function Navbar() {

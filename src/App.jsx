@@ -1,6 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
 import { CheckCircle, AlertCircle } from 'lucide-react';
-import { useShop } from './context/shopcontext'; 
+import { useShop } from './context/MyShopContext'; 
 
 import MainLayout from './layouts/MainLayout';
 import HomePage from './pages/HomePage';

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useShop } from '../context/ShopContext';
+import { useShop } from '../context/MyShopContext'; // Updated
 import { X } from 'lucide-react';
 
 const EditProfileModal = ({ isOpen, onClose }) => {
