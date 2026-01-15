@@ -1,131 +1,202 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, ShoppingBag, Heart, AlertCircle, CheckCircle } from 'lucide-react';
-import { useShop } from '../context/MyShopContext'; 
+import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query'; 
+import { ShoppingBag, ArrowLeft, AlertCircle } from 'lucide-react';
+import { useShop } from '../context/MyShopContext';
+import { fetchProductDetailsAPI } from '../services/fetch'; 
 
-export default function ProductDetailsPage() {
+const ProductDetailsPage = () => {
   const { id } = useParams();
-  const { products, addToCart } = useShop(); 
+  const navigate = useNavigate();
+  const { addToCart } = useShop();
+
+  // Local state for user selections
   const [selectedSize, setSelectedSize] = useState(null);
-  const [product, setProduct] = useState(null);
+  const [selectedColor, setSelectedColor] = useState(null);
+  
+  // NEW: State for the Error Notification
+  const [errorMessage, setErrorMessage] = useState("");
 
-  // --- NEW: Notification State ---
-  const [notification, setNotification] = useState({ show: false, message: '', type: '' });
+  // --- 1. FETCH DATA ---
+  const { data: response, isLoading, isError } = useQuery({
+    queryKey: ['product', id], 
+    queryFn: () => fetchProductDetailsAPI(id),
+    staleTime: 1000 * 60 * 5, 
+  });
 
-  // Find Product Logic
+  // Auto-clear error after 3 seconds
   useEffect(() => {
-    const found = products.find(p => p.id === id);
-    if (found) {
-      setProduct(found);
+    if (errorMessage) {
+      const timer = setTimeout(() => setErrorMessage(""), 3000);
+      return () => clearTimeout(timer);
     }
-  }, [id, products]);
+  }, [errorMessage]);
 
-  // --- NEW: Helper to show notification ---
-  const showMessage = (msg, type) => {
-    setNotification({ show: true, message: msg, type: type });
-    // Hide after 3 seconds
-    setTimeout(() => {
-      setNotification({ show: false, message: '', type: '' });
-    }, 3000);
-  };
-
-  const handleAddToCart = () => {
-    // 1. Error Condition: No size selected
-    if (!selectedSize) {
-      showMessage("Please select a size before adding to cart!", "error");
-      return;
-    }
-    
-    // 2. Success Condition
-    addToCart(product, selectedSize);
-    showMessage(`Added ${product.name} (Size: ${selectedSize}) to cart!`, "success");
-  };
-
-  // Loading State
-  if (!product) {
+  // --- 2. LOADING & ERROR STATES ---
+  if (isLoading) {
     return (
-      <div className="text-center py-20 text-white">
-        <p className="text-xl mb-4">Product not found.</p>
-        <Link to="/" className="text-primary hover:underline">Go back home</Link>
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center text-white">
+        Loading product details...
       </div>
     );
   }
 
+  if (isError || !response?.success) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center text-white gap-4">
+        <p className="text-xl text-red-500">Product not found.</p>
+        <button onClick={() => navigate('/')} className="text-gray-400 hover:text-white underline">
+          Go Back Home
+        </button>
+      </div>
+    );
+  }
+
+  // --- 3. DATA MAPPING ---
+  const backendProduct = response.data;
+  const product = {
+    id: backendProduct.id,
+    name: backendProduct.product_name,        
+    price: backendProduct.price,
+    description: backendProduct.product_description,
+    image: backendProduct.image_url,          
+    sizes: backendProduct.product_size || [], 
+    colors: backendProduct.color || [],       
+    status: backendProduct.product_status
+  };
+
+  // --- MODERN VALIDATION LOGIC ---
+  const handleAddToCart = () => {
+    if (!selectedSize && product.sizes.length > 0) {
+      // Show the modern red error instead of alert()
+      setErrorMessage("Please select a size to continue.");
+      return;
+    }
+    
+    // Clear error if successful
+    setErrorMessage(""); 
+    addToCart(product, selectedSize || 'One Size');
+  };
+
   return (
-    <div className="max-w-7xl mx-auto px-6 py-10 relative">
+    <div className="min-h-screen bg-[#0a0a0a] text-white pb-20 relative">
       
-      {/* --- NEW: Notification Banner (Top Center) --- */}
-      {notification.show && (
-        <div className={`fixed top-24 left-1/2 transform -translate-x-1/2 z-50 px-6 py-3 rounded-lg shadow-2xl flex items-center gap-3 transition-all duration-300 animate-bounce-in
-          ${notification.type === 'error' ? 'bg-red-500 text-white' : 'bg-green-500 text-white'}`}>
-          {notification.type === 'error' ? <AlertCircle size={20} /> : <CheckCircle size={20} />}
-          <span className="font-bold">{notification.message}</span>
+      {/* --- NEW: MODERN ERROR POPUP --- */}
+      {errorMessage && (
+        <div className="fixed top-24 left-1/2 transform -translate-x-1/2 z-50 animate-bounce">
+          <div className="bg-red-600 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 border border-red-400">
+            <AlertCircle size={24} className="text-white" />
+            <span className="font-bold tracking-wide">{errorMessage}</span>
+          </div>
         </div>
       )}
-      {/* --------------------------------------------- */}
 
-      <Link to="/" className="inline-flex items-center gap-2 text-gray-400 hover:text-white mb-8 transition">
-        <ArrowLeft size={20} /> Back to Collection
-      </Link>
+      {/* Navbar Placeholder / Back Button */}
+      <div className="p-6">
+        <button 
+          onClick={() => navigate(-1)} 
+          className="flex items-center gap-2 text-gray-400 hover:text-white transition"
+        >
+          <ArrowLeft size={20} /> Back
+        </button>
+      </div>
 
-      <div className="flex flex-col md:flex-row gap-10 lg:gap-16">
-        {/* Left: Image */}
-        <div className="w-full md:w-1/2 bg-gray-100 rounded-2xl overflow-hidden aspect-[4/5] relative group">
-           <img 
-             src={product.image} 
-             alt={product.name} 
-             className="w-full h-full object-cover mix-blend-multiply"
-           />
-           <button className="absolute top-4 right-4 p-3 bg-white rounded-full shadow-lg text-gray-600 hover:text-red-500 transition opacity-0 group-hover:opacity-100">
-             <Heart size={24} />
-           </button>
+      <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
+        
+        {/* LEFT: Image */}
+        <div className="bg-[#1a1a1a] rounded-2xl overflow-hidden shadow-2xl">
+          <img 
+            src={product.image} 
+            alt={product.name} 
+            className="w-full h-full object-cover"
+          />
         </div>
 
-        {/* Right: Details */}
-        <div className="w-full md:w-1/2 flex flex-col">
+        {/* RIGHT: Details */}
+        <div className="space-y-8">
           <div>
-            <h5 className="text-primary tracking-widest text-sm font-bold mb-2 uppercase">Rayaw Essentials</h5>
-            <h1 className="text-3xl md:text-4xl font-bold mb-4 text-white">{product.name}</h1>
-            <p className="text-2xl font-mono text-primary mb-6">
-              {product.currency} {product.price.toFixed(2)}
-            </p>
-            <p className="text-gray-300 leading-relaxed mb-8">
-              {product.description || "No description available for this product."}
-            </p>
-          </div>
-
-          {/* Size Selector */}
-          <div className="mb-8">
-            <h3 className="text-sm font-bold mb-3 text-gray-200">Select Size <span className="text-red-500">*</span></h3>
-            <div className="flex gap-3">
-              {['S', 'M', 'L', 'XL'].map(size => (
-                <button 
-                  key={size} 
-                  onClick={() => setSelectedSize(size)}
-                  className={`w-12 h-12 rounded-lg border-2 flex items-center justify-center text-sm font-bold transition 
-                  ${selectedSize === size 
-                    ? 'border-primary text-primary bg-primary/10' 
-                    : 'border-[#333] text-gray-400 hover:border-gray-400'
-                  }`}
-                >
-                  {size}
-                </button>
-              ))}
+            <h1 className="text-4xl font-extrabold mb-2">{product.name}</h1>
+            <div className="flex items-center gap-4">
+              <span className="text-2xl text-yellow-400 font-bold">₵{product.price}</span>
             </div>
           </div>
 
-          {/* Add to Cart Button */}
-          <div className="flex gap-4 mt-auto">
-            <button 
+          <p className="text-gray-400 leading-relaxed">
+            {product.description}
+          </p>
+
+          {/* SIZES */}
+          {product.sizes.length > 0 && (
+            <div>
+              <h3 className={`text-sm font-bold uppercase tracking-wider mb-3 transition-colors ${errorMessage ? "text-red-500" : "text-gray-500"}`}>
+                Select Size {errorMessage && "*"}
+              </h3>
+              <div className="flex flex-wrap gap-3">
+                {product.sizes.map((size) => (
+                  <button
+                    key={size}
+                    onClick={() => {
+                      setSelectedSize(size);
+                      setErrorMessage(""); // Clear error when they select one
+                    }}
+                    className={`min-w-[50px] h-12 px-4 rounded-lg border font-medium transition-all ${
+                      selectedSize === size
+                        ? 'bg-white text-black border-white'
+                        : errorMessage 
+                          ? 'border-red-500 text-red-500 bg-red-900/20' // Highlight options in red on error
+                          : 'bg-transparent text-gray-400 border-gray-700 hover:border-gray-500'
+                    }`}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* COLORS */}
+          {product.colors.length > 0 && (
+            <div>
+              <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3">Select Color</h3>
+              <div className="flex flex-wrap gap-3">
+                {product.colors.map((color) => (
+                  <button
+                    key={color}
+                    onClick={() => setSelectedColor(color)}
+                    className={`h-10 px-4 rounded-full border text-sm capitalize transition-all ${
+                      selectedColor === color
+                        ? 'bg-white text-black border-white'
+                        : 'bg-transparent text-gray-400 border-gray-700 hover:border-gray-500'
+                    }`}
+                  >
+                    {color}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ACTION BUTTON */}
+          <div className="pt-4">
+            <button
               onClick={handleAddToCart}
-              className="flex-1 bg-primary text-black font-bold py-4 rounded-xl hover:bg-yellow-400 transition flex items-center justify-center gap-2"
+              disabled={product.status !== 'available'}
+              className="w-full md:w-auto px-8 py-4 bg-yellow-400 text-black font-bold rounded-full flex items-center justify-center gap-3 hover:bg-yellow-300 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <ShoppingBag size={20} />
-              Add to Cart
+              {product.status === 'available' ? (
+                <>
+                  <ShoppingBag size={20} /> Add to Cart
+                </>
+              ) : (
+                'Out of Stock'
+              )}
             </button>
           </div>
+          
         </div>
       </div>
     </div>
   );
-}
+};
+
+export default ProductDetailsPage;
