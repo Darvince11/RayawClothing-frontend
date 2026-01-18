@@ -5,9 +5,11 @@ import { useShop } from './context/MyShopContext';
 import MainLayout from './layouts/MainLayout';
 import HomePage from './pages/HomePage';
 import ProductDetailsPage from './pages/ProductDetailsPage';
-import CartPage from './pages/CartPage';
+import CartPage from './pages/CartPage'; 
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
+import OrdersPage from './pages/OrdersPage';    
+import PaymentsPage from './pages/PaymentsPage';
 
 // --- The Global Notification Component ---
 const GlobalNotification = () => {
@@ -36,10 +38,13 @@ function App() {
         <Route path="/" element={<MainLayout />}>
           <Route index element={<HomePage />} />
           <Route path="product/:id" element={<ProductDetailsPage />} />
+          
+        
           <Route path="cart" element={<CartPage />} />
         </Route>
 
-        {/* Auth Pages (No Navbar) */}
+        <Route path="orders" element={<OrdersPage />} />
+        <Route path="payments" element={<PaymentsPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
       </Routes>

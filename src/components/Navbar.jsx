@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
-import { ShoppingBag, Home, Menu, X, LogOut, User as UserIcon, ChevronDown, Settings } from 'lucide-react';
+// Added History, Package, and CreditCard to imports
+import { ShoppingBag, Home, Menu, X, LogOut, User as UserIcon, ChevronDown, Settings, History, Package, CreditCard } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import logo from '../assets/logo.png';
-import { useShop } from '../context/MyShopContext'; // Updated
+import { useShop } from '../context/MyShopContext'; 
 import EditProfileModal from './EditProfileModal'; 
 
 export default function Navbar() {
@@ -62,12 +63,52 @@ export default function Navbar() {
           </Link>
 
           {/* --- DESKTOP MENU --- */}
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden md:flex items-center gap-6">
+            
+            {/* 1. Home Button */}
             <Link to="/" className="flex items-center gap-2 text-sm text-gray-300 hover:text-white transition hover:bg-white/5 px-3 py-2 rounded-lg">
               <Home size={18} /> <span>Home</span>
             </Link>
 
-            <div className="h-4 w-px bg-gray-700"></div>
+            {/* 2. NEW HISTORY DROPDOWN (Only if Logged In) */}
+            {user && (
+              <div className="relative group">
+                {/* The Trigger Button */}
+                <button className="flex items-center gap-2 text-sm text-gray-300 hover:text-white transition hover:bg-white/5 px-3 py-2 rounded-lg focus:outline-none">
+                  <History size={18} />
+                  <span>History</span>
+                  <ChevronDown size={14} className="group-hover:rotate-180 transition-transform duration-300" />
+                </button>
+
+                {/* The Slide-Down Menu */}
+                {/* Invisible by default, becomes visible on group-hover */}
+                <div className="absolute top-full left-0 mt-1 w-48 bg-[#252525] border border-white/10 rounded-xl shadow-2xl opacity-0 invisible translate-y-2 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-300 ease-out overflow-hidden z-50">
+                  <div className="p-1 space-y-1">
+                    
+                    {/* Orders Link */}
+                    <Link 
+                      to="/orders" 
+                      className="flex items-center gap-3 px-4 py-3 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition"
+                    >
+                      <Package size={16} className="text-blue-400" />
+                      Orders
+                    </Link>
+
+                    {/* Payments Link */}
+                    <Link 
+                      to="/payments" 
+                      className="flex items-center gap-3 px-4 py-3 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition"
+                    >
+                      <CreditCard size={16} className="text-green-400" />
+                      Payments
+                    </Link>
+
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="h-4 w-px bg-gray-700 mx-2"></div>
 
             {/* User Profile Dropdown */}
             {user ? (
@@ -171,30 +212,48 @@ export default function Navbar() {
                           <img src={userAvatar} className="w-full h-full object-cover rounded-full" />
                        </div>
                        <h2 className="text-2xl font-bold text-white capitalize mb-1">{displayName}</h2>
-                       <p className="text-sm text-gray-400 mb-8">{user.email}</p>
+                       <p className="text-sm text-gray-400 mb-6">{user.email}</p>
 
                        <div className="w-full space-y-3">
                           <Link 
                             to="/" 
                             onClick={() => setIsMobileOpen(false)}
-                            className="flex items-center justify-center gap-3 w-full py-4 bg-white/5 hover:bg-white/10 rounded-xl text-white font-bold transition"
+                            className="flex items-center justify-center gap-3 w-full py-3 bg-white/5 hover:bg-white/10 rounded-xl text-white font-bold transition"
                           >
                              <Home size={20} /> Home Page
                           </Link>
+
+                          {/* MOBILE HISTORY LINKS */}
+                          <div className="grid grid-cols-2 gap-3">
+                            <Link 
+                              to="/orders" 
+                              onClick={() => setIsMobileOpen(false)}
+                              className="flex items-center justify-center gap-2 py-3 bg-white/5 hover:bg-white/10 rounded-xl text-gray-300 hover:text-white text-sm font-medium transition"
+                            >
+                               <Package size={18} className="text-blue-400" /> Orders
+                            </Link>
+                            <Link 
+                              to="/payments" 
+                              onClick={() => setIsMobileOpen(false)}
+                              className="flex items-center justify-center gap-2 py-3 bg-white/5 hover:bg-white/10 rounded-xl text-gray-300 hover:text-white text-sm font-medium transition"
+                            >
+                               <CreditCard size={18} className="text-green-400" /> Payments
+                            </Link>
+                          </div>
 
                           <button 
                              onClick={() => {
                                  setIsEditModalOpen(true);
                                  setIsMobileOpen(false);
                              }}
-                             className="flex items-center justify-center gap-3 w-full py-4 bg-white/5 hover:bg-white/10 rounded-xl text-white font-bold transition"
+                             className="flex items-center justify-center gap-3 w-full py-3 bg-white/5 hover:bg-white/10 rounded-xl text-white font-bold transition"
                           >
                              <Settings size={20} /> Edit Profile
                           </button>
 
                           <button 
                             onClick={handleLogout} 
-                            className="flex items-center justify-center gap-3 w-full py-4 border border-red-500/30 text-red-500 hover:bg-red-500 hover:text-white rounded-xl font-bold transition"
+                            className="flex items-center justify-center gap-3 w-full py-3 border border-red-500/30 text-red-500 hover:bg-red-500 hover:text-white rounded-xl font-bold transition"
                           >
                              <LogOut size={20} /> Logout
                           </button>
@@ -234,10 +293,6 @@ export default function Navbar() {
         </div>
       </nav>
       
-      {/* CRITICAL FIX: MOVED OUTSIDE THE NAV
-        This allows the modal to cover the full screen without being trapped
-        by the navbar's backdrop-filter or sticky positioning.
-      */}
       <EditProfileModal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} />
     </>
   );
