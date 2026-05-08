@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // API URL (Live Backend)
-const API_URL = "https://rayawclothing-backend.onrender.com";
+const API_URL = import.meta.env.VITE_BACKEND_URL
 
 // Standard JSON Headers
 const jsonConfig = {
@@ -9,6 +9,10 @@ const jsonConfig = {
     'Content-Type': 'application/json'
   }
 };
+
+function path(path){
+  return `${API_URL}${path}`;
+}
 
 // --- AUTH SERVICES ---
 
@@ -52,3 +56,84 @@ export const fetchProductDetailsAPI = async (id) => {
   const response = await axios.get(`${API_URL}/products/${id}`);
   return response.data; 
 };
+
+// PAYMENT SERVICES
+
+export const addPaymentHistoty = async ({
+  order_id,
+  reference,
+  currency,
+  payment_method,
+  amount,
+  payment_status
+}) => {
+  const response = await axios.post(
+    path("/add-payment-history"),
+  {
+    order_id:order_id,
+    reference:reference,
+    currency:currency,
+    payment_method:payment_method,
+    amount:amount,
+    payment_status: payment_status
+  }
+)
+
+  return response.data
+}
+
+export const initializePayment = async ({email})=>{
+  const response = await axios.post(
+    path("/payment-initialize"),
+    {email:email}
+  )
+  return response.data
+}
+
+export const verifyPayment = async ({reference})=>{
+  const response = await axios.get(path(`/verify-payment?${reference}`))
+  return response.data
+}
+
+// ORDER SERVICES
+
+export const addOrder = async ({
+  products,   
+  user_id,       
+  paymentMethod,
+  total_amount  
+})=>{
+  const response = await axios.post(
+    path("/orders"),
+    {
+      products:products,
+      userId:user_id,
+      paymentMethod:paymentMethod,
+      total_amount:total_amount
+    }
+  )
+
+  return response.data
+}
+
+export const addOrderItem = async ({
+  order_id,  
+  product_id,
+  quantity 
+})=>{
+  const response = await axios.post(
+    path(`/order-items`),
+    {
+      order_id:order_id,
+      product_id:product_id,
+      quantity:quantity
+    }
+  )
+
+  return response.data
+}
+
+export const getOrderByUserId = async (user_id)=>{
+  const response = await axios.get(path(`/orders/user/${user_id}`))
+  return response.data
+}
