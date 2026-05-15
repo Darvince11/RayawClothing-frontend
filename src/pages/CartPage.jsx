@@ -1,15 +1,19 @@
 import { useNavigate } from 'react-router-dom';
 import { Trash2, ArrowRight, ShoppingBag, Plus, Minus } from 'lucide-react';
 import { useShop } from '../context/MyShopContext';
+import { useQuery } from '@tanstack/react-query';
+import { addOrder} from '../services/fetch';
+import { useAddOrder } from '../services/checkout-service';
 
 export default function CartPage() {
   // 1. Destructure 'showNotification' so we can use it
   const { cart, removeFromCart, updateQuantity, getTotalPrice, user, showNotification } = useShop(); 
   const navigate = useNavigate();
   const total = getTotalPrice();
+  const {mutateAsync, data,isSuccess} = useAddOrder()
 
   // --- THE FIXED LOGIC ---
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (!user) {
       // 2. Use the custom notification instead of alert
       showNotification("Please login to complete your purchase", "error");
@@ -19,7 +23,29 @@ export default function CartPage() {
     } else {
       // Proceed to checkout (feature coming soon)
       showNotification("Proceeding to secure checkout...", "success");
+      const products= cart.map((product)=>{
+        return {
+          product_id:product.id,
+          quantity:product.quantity
+        }
+      })
+
+      const orderData = {
+        products:products,
+        user:user.id,
+        email:user.email
+      }
+      const responseData = await mutateAsync(orderData)
+
+      if(responseData){
+        localStorage.setItem("order_id",responseData.data.order_id)
+        window.location.href=responseData.data.authorization_url
+      }else{
+        showNotification("Failed to initialize checkout. Please try again.", "error");
+      }
+
     }
+
   };
 
   if (cart.length === 0) {
