@@ -3,8 +3,8 @@ import React from 'react';
 
 export default function Hero() {
   return (
-    <div className="max-w-7xl mx-auto px-6 mb-10">
-      <div className="bg-[#FFC107] rounded-3xl p-10 md:p-16 relative overflow-hidden flex items-center min-h-[300px]">
+    <div className="max-w-7xl mx-auto px-3 mb-4">
+      <div className="bg-[#FFC107] rounded-3xl p-10 md:p-6 md:px-10 relative overflow-hidden flex items-center min-h-[200px]">
         
         {/* Text Content */}
         <div className="relative z-10 max-w-lg">

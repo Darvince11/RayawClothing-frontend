@@ -82,13 +82,7 @@ export const addPaymentHistoty = async ({
   return response.data
 }
 
-export const initializePayment = async ({email})=>{
-  const response = await axios.post(
-    path("/payment-initialize"),
-    {email:email}
-  )
-  return response.data
-}
+
 
 export const verifyPayment = async ({reference})=>{
   const response = await axios.get(path(`/verify-payment?${reference}`))
@@ -100,33 +94,14 @@ export const verifyPayment = async ({reference})=>{
 export const addOrder = async ({
   products,   
   user_id,       
-  paymentMethod,
-  total_amount  
+  email 
 })=>{
   const response = await axios.post(
     path("/orders"),
     {
       products:products,
       userId:user_id,
-      paymentMethod:paymentMethod,
-      total_amount:total_amount
-    }
-  )
-
-  return response.data
-}
-
-export const addOrderItem = async ({
-  order_id,  
-  product_id,
-  quantity 
-})=>{
-  const response = await axios.post(
-    path(`/order-items`),
-    {
-      order_id:order_id,
-      product_id:product_id,
-      quantity:quantity
+      email:email
     }
   )
 
@@ -136,4 +111,10 @@ export const addOrderItem = async ({
 export const getOrderByUserId = async (user_id)=>{
   const response = await axios.get(path(`/orders/user/${user_id}`))
   return response.data
+}
+
+export const getOrderById = async (order_id)=>{
+  const response = await axios.get(path(`/orders/${order_id}`))
+  console.log(response.data.data)
+  return response.data.data
 }

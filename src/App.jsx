@@ -10,6 +10,7 @@ import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import OrdersPage from './pages/OrdersPage';    
 import PaymentsPage from './pages/PaymentsPage';
+import ConfirmOrderPage from './pages/ConfirmOrderPage';
 
 // --- The Global Notification Component ---
 const GlobalNotification = () => {
@@ -41,6 +42,7 @@ function App() {
           
         
           <Route path="cart" element={<CartPage />} />
+          <Route path="/confirm-order" element={<ConfirmOrderPage />} />
         </Route>
 
         <Route path="orders" element={<OrdersPage />} />
