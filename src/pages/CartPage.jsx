@@ -38,7 +38,6 @@ export default function CartPage() {
       const responseData = await mutateAsync(orderData)
 
       if(responseData){
-        localStorage.setItem("order_id",responseData.data.order_id)
         window.location.href=responseData.data.authorization_url
       }else{
         showNotification("Failed to initialize checkout. Please try again.", "error");

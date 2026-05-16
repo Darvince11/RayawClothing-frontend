@@ -42,7 +42,7 @@ function App() {
           
         
           <Route path="cart" element={<CartPage />} />
-          <Route path="/confirm-order" element={<ConfirmOrderPage />} />
+          <Route path="/orders/:id" element={<ConfirmOrderPage />} />
         </Route>
 
         <Route path="orders" element={<OrdersPage />} />

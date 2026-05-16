@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // API URL (Live Backend)
-const API_URL = import.meta.env.VITE_BACKEND_URL
+const API_URL = import.meta.env.VITE_LOCAL_BACKEND_URL
 
 // Standard JSON Headers
 const jsonConfig = {
