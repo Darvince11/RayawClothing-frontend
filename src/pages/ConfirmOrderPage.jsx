@@ -3,11 +3,14 @@ import OrderImage from "../assets/order.svg"
 import OrderProgressBar from '../components/ui/order-progress-bar'
 import ReactTypingEffect from 'react-typing-effect'
 import { useGetOrderById } from '../services/checkout-service'
+import { useParams } from 'react-router-dom'
+import { Skeleton } from '../components/ui/skeleton'
 
 function ConfirmOrderPage() {
-    const {data,isLoading}= useGetOrderById(localStorage.getItem("order_id"))
+    const { id } = useParams();
+    const {data,isLoading}= useGetOrderById(id)
     const date=new Date(data?.created_at)
-
+    
     return (
     <div className='flex flex-col gap-10 px-6 mt-4 mx-auto max-w-7xl'>
         <div className="bg-[#EAB308] overflow-hidden relative flex justify-between py-8 px-6 md:px-20 lg:px-32 rounded-[30px] items-center">
@@ -55,11 +58,40 @@ function ConfirmOrderPage() {
                 src={OrderImage} alt="img" />
             </div>
         </div>
-        {!isLoading&&(
+        <OrderProgressBar initialStage={data?.status} isLoading={isLoading}/>
+        <div className="flex flex-col gap-4 bg-[#373737]/50 p-6 rounded-2xl border border-[#212121]">
+           {isLoading &&(
             <>
-            <OrderProgressBar initialStage={data?.status}/>
-            <div className="flex flex-col gap-4 bg-[#373737]/50 p-6 rounded-2xl border border-[#212121]">
                 <div className="flex justify-between items-center">
+                    <Skeleton className="h-6 w-[200px]" />
+                    <Skeleton className="h-6 w-[100px]" />
+                </div>
+                <div className="flex flex-col gap-4">
+                    {Array.from({ length: 4 }).map((item,index)=>(
+                        <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-end" key={index}>
+                            <div className="flex gap-6 items-end">
+                                <Skeleton className="w-[92px] h-[98px]" />
+                                <div>
+                                    <Skeleton className="w-[200px] h-6 mb-4"/>
+                                    <div className="flex gap-4 text-sm text-white/50">
+                                        <Skeleton className="w-7 h-4"/>
+                                        <Skeleton className="w-7 h-4"/>
+                                        <Skeleton className="w-7 h-4"/>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <Skeleton className="w-[100px] h-4 mb-4"/>
+                                <Skeleton className="w-[100px] h-4"/>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </>
+           )}
+           {!isLoading && (
+            <>
+                 <div className="flex justify-between items-center">
                     <p className="text-[20px] md:text-[32px] font-bold text-white">
                         ORDER ID: <span className="text-white/50">OD-1U345E</span>
                     </p>
@@ -92,9 +124,9 @@ function ConfirmOrderPage() {
                         </div>
                     ))}
                 </div>
-            </div>
             </>
-        )}
+           )}
+        </div>
         
     </div>
   )

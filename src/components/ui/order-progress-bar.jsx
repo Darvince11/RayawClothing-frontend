@@ -1,8 +1,9 @@
 import { CheckCircle2 } from 'lucide-react'
 import React from 'react'
 import { useState } from 'react'
+import { Skeleton } from './skeleton'
 
-function OrderProgressBar({initialStage}) {
+function OrderProgressBar({initialStage, isLoading}) {
     const [currentStage, setCurrentStage]=useState(initialStage)
     const stages=[
         "pending",
@@ -11,6 +12,19 @@ function OrderProgressBar({initialStage}) {
         "shipping",
         "delivered"
     ]
+    if (isLoading==true) {
+        return (
+            <div className='flex w-full px-0 md:px-10'>
+                {stages.map((stage,index)=>(
+                    <div key={index} className='flex w-full flex-col gap-4 justify-center items-center'>
+                        <Skeleton className="w-full  h-[3px] "/>
+                        <Skeleton className="w-[24px] h-[24px] rounded-[99999999px]" />
+                        <Skeleton className="w-[50px] h-[10px] rounded-md" />
+                    </div>
+                ))}
+            </div>
+        )
+    }
   return (
     <div className='flex w-full px-0 md:px-10'>
         {stages.map((stage,index)=>(
@@ -23,6 +37,7 @@ function OrderProgressBar({initialStage}) {
             </div>
         ))}
     </div>
+
   )
 }
 
