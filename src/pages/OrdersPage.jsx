@@ -1,35 +1,12 @@
-import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Package, ShoppingBag, ArrowLeft } from 'lucide-react';
 import { useShop } from '../context/MyShopContext';
+import { useGetOrdersByUserId } from '../services/checkout-service';
 
 export default function OrdersPage() {
   const { user } = useShop();
   const navigate = useNavigate();
-
-  const [orders, setOrders] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    if (!user) { navigate('/login'); return; }
-
-    const loadData = async () => {
-      try {
-        setIsLoading(true);
-        await new Promise(resolve => setTimeout(resolve, 1500)); 
-
-        setOrders([
-          { id: "ORD-7782-TEST", date: "Jan 15, 2026", total: 330.50, items: ["Running Shoes", "Cotton T-Shirt"] }
-        ]); 
-
-      } catch (error) {
-        console.error("Failed to load orders:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    loadData();
-  }, [user, navigate]);
+  const {data:ordersData,isLoading:isOrderDataLoading}=useGetOrdersByUserId(user?.id)
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white pt-6 pb-20 px-4 md:px-8">
@@ -47,7 +24,7 @@ export default function OrdersPage() {
         <div className="space-y-4">
           
           {/* SKELETON */}
-          {isLoading ? (
+          {isOrderDataLoading ? (
             Array.from({ length: 3 }).map((_, i) => (
               <div key={i} className="bg-[#1a1a1a] border border-white/5 rounded-xl p-6 animate-pulse">
                 <div className="flex flex-col md:flex-row justify-between md:items-start gap-4 mb-4">
@@ -67,7 +44,7 @@ export default function OrdersPage() {
             ))
           ) : (
             // REAL DATA
-            orders.map((order) => (
+            ordersData?.map((order) =>  (
               <div key={order.id} className="bg-[#1a1a1a] border border-white/5 rounded-xl p-6 hover:border-white/10 transition">
                 {/* MOBILE VIEW: flex-col (Stacked)
                    DESKTOP VIEW: flex-row (Side by side)
@@ -77,7 +54,7 @@ export default function OrdersPage() {
                   {/* Left Side: ID & Date */}
                   <div>
                     <h3 className="font-bold text-lg text-white">{order.id}</h3>
-                    <p className="text-sm text-gray-500 mt-1">{order.date}</p>
+                    <p className="text-sm text-gray-500 mt-1">{new Date(order.order_date).toLocaleDateString()}</p>
                   </div>
                   
                   {/* Right Side: Price */}
@@ -86,7 +63,7 @@ export default function OrdersPage() {
                     <p className="md:hidden text-sm text-gray-400 font-medium">Total Amount</p>
                     <div>
                         <p className="hidden md:block text-xs text-gray-400 uppercase tracking-wider text-right">Total</p>
-                        <p className="text-xl font-bold text-yellow-400">₵{order.total.toFixed(2)}</p>
+                        <p className="text-xl font-bold text-yellow-400">₵{order.total_amount.toFixed(2)}</p>
                     </div>
                   </div>
                 </div>
@@ -95,7 +72,7 @@ export default function OrdersPage() {
                   <div className="flex items-start gap-3 text-sm text-gray-400">
                     <ShoppingBag size={18} className="mt-0.5 shrink-0" />
                     <span className="leading-relaxed">
-                      {Array.isArray(order.items) ? order.items.join(", ") : order.items}
+                      {Array.isArray(order.order_items_names) ? order.order_items_names.join(", ") : order.order_items_names}
                     </span>
                   </div>
                 </div>
@@ -103,7 +80,7 @@ export default function OrdersPage() {
             ))
           )}
 
-          {!isLoading && orders.length === 0 && (
+          {!isOrderDataLoading && ordersData.length === 0 && (
             <div className="text-center py-20 bg-[#1a1a1a] rounded-xl border border-white/5">
               <Package size={48} className="mx-auto text-gray-600 mb-4 opacity-50" />
               <p className="text-gray-500">You haven't placed any orders yet.</p>

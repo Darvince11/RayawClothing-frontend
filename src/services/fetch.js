@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // API URL (Live Backend)
-const API_URL = import.meta.env.VITE_LOCAL_BACKEND_URL
+const API_URL = import.meta.env.VITE_BACKEND_URL
 
 // Standard JSON Headers
 const jsonConfig = {
@@ -100,7 +100,7 @@ export const addOrder = async ({
     path("/orders"),
     {
       products:products,
-      userId:user_id,
+      user_id:user_id,
       email:email
     }
   )
@@ -110,11 +110,10 @@ export const addOrder = async ({
 
 export const getOrderByUserId = async (user_id)=>{
   const response = await axios.get(path(`/orders/user/${user_id}`))
-  return response.data
+  return response.data.data
 }
 
 export const getOrderById = async (order_id)=>{
   const response = await axios.get(path(`/orders/${order_id}`))
-  console.log(response.data.data)
   return response.data.data
 }

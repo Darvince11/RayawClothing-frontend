@@ -32,7 +32,7 @@ export default function CartPage() {
 
       const orderData = {
         products:products,
-        user:user.id,
+        user_id:user.id,
         email:user.email
       }
       const responseData = await mutateAsync(orderData)
