@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { Skeleton } from './skeleton'
 
 function OrderProgressBar({initialStage, isLoading}) {
-    const [currentStage, setCurrentStage]=useState(initialStage)
     const stages=[
         "pending",
         "paid",
@@ -12,10 +11,11 @@ function OrderProgressBar({initialStage, isLoading}) {
         "shipping",
         "delivered"
     ]
+    console.log(initialStage)
     if (isLoading==true) {
         return (
             <div className='flex w-full px-0 md:px-10'>
-                {stages.map((stage,index)=>(
+                {stages.map((_,index)=>(
                     <div key={index} className='flex w-full flex-col gap-4 justify-center items-center'>
                         <Skeleton className="w-full  h-[3px] "/>
                         <Skeleton className="w-[24px] h-[24px] rounded-[99999999px]" />
@@ -30,9 +30,9 @@ function OrderProgressBar({initialStage, isLoading}) {
         {stages.map((stage,index)=>(
             <div key={index} className='flex w-full flex-col gap-4 justify-center items-center'>
                 <div
-                className={`${stages.indexOf(currentStage)>=index?"bg-[#EAB308]":"bg-white/10"} w-full  h-[3px]`}
+                className={`${stages.indexOf(initialStage)>=index?"bg-[#EAB308]":"bg-white/10"} w-full  h-[3px]`}
                 />
-                <CheckCircle2 fill={`${stages.indexOf(currentStage)>=index?'#EAB308':"white/10"}`} />
+                <CheckCircle2 fill={`${stages.indexOf(initialStage)>=index?'#EAB308':"white/10"}`} />
                 <p className='capitalize text-xs md:text-sm px-1 '>{stage}</p>
             </div>
         ))}

@@ -10,6 +10,7 @@ function ConfirmOrderPage() {
     const { id } = useParams();
     const {data,isLoading}= useGetOrderById(id)
     const date=new Date(data?.created_at)
+    console.log(data)
     
     return (
     <div className='flex flex-col gap-10 px-6 mt-4 mx-auto max-w-7xl'>
@@ -91,7 +92,8 @@ function ConfirmOrderPage() {
            )}
            {!isLoading && (
             <>
-                 <div className="flex justify-between items-center">
+                {/* <OrderProgressBar initialStage={data?.status} isLoading={isLoading}/> */}
+                <div className="flex justify-between items-center">
                     <p className="text-[20px] md:text-[32px] font-bold text-white">
                         ORDER ID: <span className="text-white/50">OD-1U345E</span>
                     </p>
