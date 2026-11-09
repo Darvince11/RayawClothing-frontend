@@ -53,7 +53,7 @@ export default function OrdersPage() {
                   
                   {/* Left Side: ID & Date */}
                   <div>
-                    <h3 className="font-bold text-lg text-white">{order.id}</h3>
+                    <h3 className="font-bold text-lg text-white">{order.order_id}</h3>
                     <p className="text-sm text-gray-500 mt-1">{new Date(order.order_date).toLocaleDateString()}</p>
                   </div>
                   

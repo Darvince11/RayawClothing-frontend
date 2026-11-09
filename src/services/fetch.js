@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // API URL (Live Backend)
-const API_URL = import.meta.env.VITE_BACKEND_URL
+const API_URL = import.meta.env.VITE_LOCAL_BACKEND_URL
 
 // Standard JSON Headers
 const jsonConfig = {
@@ -10,9 +10,62 @@ const jsonConfig = {
   }
 };
 
-function path(path){
-  return `${API_URL}${path}`;
-}
+const api=axios.create({
+  baseURL:API_URL,
+  headers:{
+    'Content-Type': 'application/json',
+  }
+})
+
+const refreshClient=axios.create({
+  baseURL:API_URL,
+  headers:{
+    'Content-Type': 'application/json'
+  },
+})
+
+let refreshPromise=null
+
+api.interceptors.request.use((config)=>{
+  const accessToken=localStorage.getItem('access_token')??""
+  config.headers.Authorization=`Bearer ${accessToken}`
+  return config
+})
+
+api.interceptors.response.use(
+  (response)=>{
+    return response;
+  },
+  async (error)=>{
+    const originalRequest=error.config
+
+    if (error.response.status!==401){
+      return Promise.reject(error)
+    }
+
+    try{
+      // If no refresh is currently running, start one.
+      refreshPromise = await refreshClient.post("/auth/refresh",
+        {
+          refresh_token: localStorage.getItem('refresh_token')??""
+        })
+
+      const newAccessToken = refreshPromise.data.data.access_token;
+      localStorage.setItem('access_token', newAccessToken);
+
+      originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+
+      return api(originalRequest);
+
+    }catch(error){
+      localStorage.removeItem('access_token')
+      localStorage.removeItem('refresh_token')
+      window.location.href="/login"
+    }
+
+   return Promise.reject(error)
+  }
+)
 
 // --- AUTH SERVICES ---
 
@@ -20,8 +73,8 @@ export const loginAPI = async (email, password) => {
   const cleanEmail = email.trim();
   const cleanPassword = password.trim();
 
-  const response = await axios.post(
-    `${API_URL}/login`,
+  const response = await api.post(
+    "/login",
     { 
       email: cleanEmail, 
       // CRITICAL FIX: Mapping the frontend 'password' to backend 'user_password'
@@ -35,7 +88,7 @@ export const loginAPI = async (email, password) => {
 export const registerAPI = async (userData) => {
   // We send the full object.
   // Note: Ensure your SignupPage passes 'user_password' inside userData!
-  const response = await axios.post(`${API_URL}/signup`, userData, jsonConfig);
+  const response = await api.post("/signup", userData, jsonConfig);
   return response.data;
 };
 
@@ -47,13 +100,13 @@ export const fetchProductsAPI = async ({ pageParam = null }) => {
   const cursorParam = pageParam ? `&cursor=${pageParam}` : '';
   const url = `${API_URL}/products?limit=3${cursorParam}`;
   
-  const response = await axios.get(url);
+  const response = await api.get(url);
   return response.data; 
 };
 
 // 2. Fetch Single Product Details
 export const fetchProductDetailsAPI = async (id) => {
-  const response = await axios.get(`${API_URL}/products/${id}`);
+  const response = await api.get(`/products/${id}`);
   return response.data; 
 };
 
@@ -67,8 +120,8 @@ export const addPaymentHistoty = async ({
   amount,
   payment_status
 }) => {
-  const response = await axios.post(
-    path("/add-payment-history"),
+  const response = await api.post(
+    "/add-payment-history",
   {
     order_id:order_id,
     reference:reference,
@@ -85,7 +138,7 @@ export const addPaymentHistoty = async ({
 
 
 export const verifyPayment = async ({reference})=>{
-  const response = await axios.get(path(`/verify-payment?${reference}`))
+  const response = await api.get(`/verify-payment?${reference}`)
   return response.data
 }
 
@@ -96,8 +149,8 @@ export const addOrder = async ({
   user_id,       
   email 
 })=>{
-  const response = await axios.post(
-    path("/orders"),
+  const response = await api.post(
+    "/orders",
     {
       products:products,
       user_id:user_id,
@@ -109,11 +162,16 @@ export const addOrder = async ({
 }
 
 export const getOrderByUserId = async (user_id)=>{
-  const response = await axios.get(path(`/orders/user/${user_id}`))
+  const response = await api.get(`/orders/user/${user_id}`)
   return response.data.data
 }
 
 export const getOrderById = async (order_id)=>{
-  const response = await axios.get(path(`/orders/${order_id}`))
+  const response = await api.get(`/orders/${order_id}`)
+  return response.data.data
+}
+
+export const getPaymentHistoryByUserId = async (user_id)=>{
+  const response = await api.get(`/payments/users/${user_id}`)
   return response.data.data
 }
