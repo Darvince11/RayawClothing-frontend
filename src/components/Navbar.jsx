@@ -41,7 +41,7 @@ export default function Navbar() {
     logout();
     setIsProfileOpen(false);
     setIsMobileOpen(false);
-    navigate('/login');
+    navigate('/');
   };
 
   const getDisplayName = () => {
