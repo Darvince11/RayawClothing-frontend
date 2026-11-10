@@ -28,6 +28,18 @@ export const registerAPI = async (userData) => {
   return response.data;
 };
 
+// --- EMAIL VERIFICATION ---
+// NOTE: Placeholder endpoints. Confirm the paths and body keys with the backend.
+export const verifyEmailAPI = async (email, code) => {
+  const response = await axios.post(`${API_URL}/verify-email`, { email, code }, jsonConfig);
+  return response.data;
+};
+
+export const resendCodeAPI = async (email) => {
+  const response = await axios.post(`${API_URL}/resend-code`, { email }, jsonConfig);
+  return response.data;
+};
+
 // --- PRODUCT SERVICES ---
 export const fetchProductsAPI = async ({ pageParam = null }) => {
   // Handles pagination cursor

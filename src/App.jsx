@@ -8,6 +8,7 @@ import ProductDetailsPage from './pages/ProductDetailsPage';
 import CartPage from './pages/CartPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
+import VerifyEmailPage from './pages/VerifyEmailPage';
 
 // --- The Global Notification Component ---
 const GlobalNotification = () => {
@@ -42,6 +43,7 @@ function App() {
         {/* Auth Pages (No Navbar) */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
       </Routes>
     </>
   );

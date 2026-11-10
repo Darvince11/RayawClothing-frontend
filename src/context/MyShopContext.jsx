@@ -1,8 +1,18 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query'; 
-import { loginAPI, registerAPI, fetchProductsAPI } from '../services/fetch';
+import { loginAPI, registerAPI, verifyEmailAPI, resendCodeAPI, fetchProductsAPI } from '../services/fetch';
 
 const ShopContext = createContext();
+
+// Email of a user who signed up but hasn't verified yet (survives a page refresh)
+export const PENDING_EMAIL_KEY = 'pending_verification_email';
+
+// Prefer the server's message; fall back for network errors
+const getErrorMessage = (error, fallback) => {
+  if (error.response) return error.response.data?.message || error.response.data?.error || fallback;
+  if (error.isAxiosError) return fallback;
+  return error.message || fallback;
+};
 
 export const ShopProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -85,7 +95,7 @@ export const ShopProvider = ({ children }) => {
     localStorage.setItem('user', JSON.stringify(userData));
     
     showNotification(
-      method === 'login' ? `Welcome back, ${displayName}!` : "Account created successfully!", 
+      method === 'login' ? `Welcome back, ${displayName}!` : `Email verified. Welcome, ${displayName}!`,
       "success"
     );
     return true;
@@ -127,15 +137,62 @@ export const ShopProvider = ({ children }) => {
       const response = await registerAPI(userData);
       
       if (!response.success) {
-        throw new Error(response.message || "Signup failed");
+        throw new Error(response.message || "Signup failed.");
       }
 
-      return handleAuthSuccess(response, 'register');
+      // Don't log in yet: the user must verify their email first.
+      sessionStorage.setItem(PENDING_EMAIL_KEY, userData.email);
+      showNotification("We sent a verification code to your email.", "success");
+      return true;
 
     } catch (error) {
       console.error("Register Error:", error);
-      const msg = error.response?.data?.message || error.response?.data?.error || "Signup failed.";
-      showNotification(msg, "error");
+      showNotification(getErrorMessage(error, "Signup failed."), "error");
+      return false;
+    }
+  };
+
+  // --- VERIFY EMAIL ---
+  // Returns 'loggedIn' (server sent tokens), 'verified' (user must log in), or false.
+  const verifyEmail = async (email, code) => {
+    try {
+      const response = await verifyEmailAPI(email, code);
+
+      if (!response.success) {
+        throw new Error(response.message || "Verification failed.");
+      }
+
+      sessionStorage.removeItem(PENDING_EMAIL_KEY);
+
+      if (response.data?.access_token && response.data?.user_info) {
+        handleAuthSuccess(response, 'verify');
+        return 'loggedIn';
+      }
+
+      showNotification("Email verified! Please log in.", "success");
+      return 'verified';
+
+    } catch (error) {
+      console.error("Verify Error:", error);
+      showNotification(getErrorMessage(error, "Invalid or expired code."), "error");
+      return false;
+    }
+  };
+
+  const resendCode = async (email) => {
+    try {
+      const response = await resendCodeAPI(email);
+
+      if (!response.success) {
+        throw new Error(response.message || "Could not resend the code.");
+      }
+
+      showNotification("A new code has been sent to your email.", "success");
+      return true;
+
+    } catch (error) {
+      console.error("Resend Error:", error);
+      showNotification(getErrorMessage(error, "Could not resend the code."), "error");
       return false;
     }
   };
@@ -174,7 +231,7 @@ export const ShopProvider = ({ children }) => {
 
   return (
     <ShopContext.Provider value={{ 
-      user, register, login, logout, updateUserProfile,
+      user, register, verifyEmail, resendCode, login, logout, updateUserProfile,
       products, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading,
       cart, addToCart, removeFromCart, updateQuantity, 
       getCartCount, getTotalPrice, clearCart, notification 

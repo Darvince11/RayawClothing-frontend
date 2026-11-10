@@ -22,11 +22,13 @@ export default function SignupPage() {
     setIsLoading(true);
     
     // This now sends the data exactly how the backend wants it
-    const success = await register(formData);
-    
+    const email = formData.email.trim();
+    const success = await register({ ...formData, email });
+
     setIsLoading(false);
     if (success) {
-      navigate('/'); 
+      // Next step: enter the code that was emailed to them
+      navigate('/verify-email', { state: { email } });
     }
   };
 
