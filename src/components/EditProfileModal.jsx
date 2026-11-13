@@ -1,21 +1,26 @@
 import { useState } from 'react';
 import { useShop } from '../context/MyShopContext'; // Updated
 import { X } from 'lucide-react';
+import { useUpdateUserDetails } from '../services/user-service';
 
 const EditProfileModal = ({ isOpen, onClose }) => {
-  const { user, updateUserProfile } = useShop();
-  
+  const { user } = useShop();
+  const {mutateAsync}=useUpdateUserDetails()
+
   const [formData, setFormData] = useState({
     first_name: user?.first_name || '',
     last_name: user?.last_name || '',
-    phone: user?.phone || '',
+    phone_number: user?.phone || '',
   });
 
   if (!isOpen) return null;
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    updateUserProfile(formData); 
+
+    const userData={...formData,email:user?.email}
+    mutateAsync(userData)
+
     onClose(); 
   };
 
