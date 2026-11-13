@@ -175,3 +175,7 @@ export const getPaymentHistoryByUserId = async (user_id)=>{
   const response = await api.get(`/payments/users/${user_id}`)
   return response.data.data
 }
+
+export const updateUserDetails=async (data)=>{
+  const response= await api.post("/auth/user/edit",data)
+}
