@@ -293,7 +293,9 @@ export default function Navbar() {
         </div>
       </nav>
       
-      <EditProfileModal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} />
+      {isEditModalOpen && (
+        <EditProfileModal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} />
+      )}
     </>
   );
 }

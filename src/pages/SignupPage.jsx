@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { User, Mail, Lock, Phone, ArrowRight, Loader2 } from 'lucide-react';
+import { User, Mail, Phone, ArrowRight, Loader2 } from 'lucide-react';
 import { useShop } from '../context/MyShopContext';
+import PasswordInput from '../components/PasswordInput';
 
 export default function SignupPage() {
   const { register } = useShop(); 
@@ -100,17 +101,12 @@ export default function SignupPage() {
           </div>
 
           {/* Password (Changed to user_password) */}
-          <div className="relative group">
-            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-primary transition" size={20} />
-            <input 
-              required
-              type="password" 
-              placeholder="Password"
-              className="w-full bg-[#2C2C2C] text-white pl-12 pr-4 py-4 rounded-xl border border-transparent focus:border-primary/50 focus:bg-[#333] outline-none transition-all placeholder:text-gray-500"
-              value={formData.user_password}
-              onChange={(e) => setFormData({...formData, user_password: e.target.value})}
-            />
-          </div>
+          <PasswordInput
+            required
+            autoComplete="new-password"
+            value={formData.user_password}
+            onChange={(e) => setFormData({...formData, user_password: e.target.value})}
+          />
 
           <button 
             type="submit" 

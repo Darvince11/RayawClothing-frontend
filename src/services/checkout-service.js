@@ -19,6 +19,8 @@ export const useGetOrderById= (orderId)=>{
 export const useGetOrdersByUserId= (userId)=>{
     return useQuery({
         queryKey:["orders",userId],
-        queryFn: ()=>getOrderByUserId(userId)
+        queryFn: ()=>getOrderByUserId(userId),
+        // The user loads from the server, so wait until we have their id
+        enabled: !!userId
     })
 }

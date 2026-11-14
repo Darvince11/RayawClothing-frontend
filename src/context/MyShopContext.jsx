@@ -1,13 +1,36 @@
-import { createContext, useContext, useState, useEffect } from 'react';
-import { useInfiniteQuery } from '@tanstack/react-query'; 
+import { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { loginAPI, registerAPI, fetchProductsAPI } from '../services/fetch';
+import { useCurrentUser, CURRENT_USER_KEY } from '../services/user-service';
 
 const ShopContext = createContext();
 
+// Backend user record -> the shape the UI uses
+const toAppUser = (u) => ({
+  id: u.id,
+  first_name: u.first_name || "",
+  last_name: u.last_name || "",
+  email: u.email,
+  phone: u.phone_number || "",
+});
+
 export const ShopProvider = ({ children }) => {
-  
+  const queryClient = useQueryClient();
+
   // --- 1. USER STATE ---
-  const [user, setUser] = useState(null);
+  // The profile comes from the database (GET /auth/user) whenever we hold an access token.
+  const [isLoggedIn, setIsLoggedIn] = useState(() => !!localStorage.getItem('access_token'));
+  const { data: currentUser, isLoading: isUserQueryLoading } = useCurrentUser(isLoggedIn);
+  const user = useMemo(
+    () => (isLoggedIn && currentUser ? toAppUser(currentUser) : null),
+    [isLoggedIn, currentUser]
+  );
+  const isUserLoading = isLoggedIn && isUserQueryLoading;
+
+  // The profile used to be cached in localStorage; remove that stale copy
+  useEffect(() => {
+    localStorage.removeItem('user');
+  }, []);
 
   // --- 2. CART STATE (With Persistence) ---
   const [cart, setCart] = useState(() => {
@@ -59,48 +82,29 @@ export const ShopProvider = ({ children }) => {
     setTimeout(() => setNotification(null), 3000); 
   };
 
-  // Load User on Startup
-  useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    const token = localStorage.getItem('access_token');
-    if (storedUser && token) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (e) {
-        console.error("Failed to parse user", e);
-        logout(); 
-      }
-    }
-  }, []);
-
   // --- HELPER: HANDLE AUTH SUCCESS ---
   const handleAuthSuccess = (responseData, method) => {
     const { user_info, access_token, refresh_token } = responseData.data;
 
-    if (!access_token || !user_info) {
-      throw new Error("Invalid server response: Missing token or user info.");
+    if (!access_token) {
+      throw new Error("Invalid server response: Missing access token.");
     }
 
     localStorage.setItem('access_token', access_token);
     localStorage.setItem('refresh_token', refresh_token);
 
-    const displayName = 
-      user_info.first_name || 
-      user_info.last_name || 
-      user_info.email?.split('@')[0] || 
+    // Show the login response's details straight away, then replace them
+    // with the database copy from GET /auth/user
+    if (user_info) queryClient.setQueryData(CURRENT_USER_KEY, user_info);
+    queryClient.invalidateQueries({ queryKey: CURRENT_USER_KEY });
+    setIsLoggedIn(true);
+
+    const displayName =
+      user_info?.first_name ||
+      user_info?.last_name ||
+      user_info?.email?.split('@')[0] ||
       "Customer";
 
-    const userData = {
-      id: user_info.id,
-      first_name: displayName, 
-      last_name: user_info.last_name || "",
-      email: user_info.email,
-      phone: user_info.phone_number
-    };
-
-    setUser(userData);
-    localStorage.setItem('user', JSON.stringify(userData));
-    
     showNotification(
       method === 'login' ? `Welcome back, ${displayName}!` : "Account created successfully!", 
       "success"
@@ -140,16 +144,9 @@ export const ShopProvider = ({ children }) => {
     }
   };
 
-  const updateUserProfile = (updatedData) => {
-    const newUser = { ...user, ...updatedData };
-    setUser(newUser);
-    localStorage.setItem('user', JSON.stringify(newUser));
-    showNotification("Profile updated!", "success");
-  };
-
   const logout = () => {
-    setUser(null);
-    localStorage.removeItem('user');
+    setIsLoggedIn(false);
+    queryClient.removeQueries({ queryKey: CURRENT_USER_KEY });
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     showNotification("Logged out.", "success");
@@ -189,7 +186,7 @@ export const ShopProvider = ({ children }) => {
 
   return (
     <ShopContext.Provider value={{ 
-      user, register, login, logout, updateUserProfile,
+      user, isUserLoading, register, login, logout,
       products, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading,
       cart, addToCart, removeFromCart, updateQuantity, 
       getCartCount, getTotalPrice, clearCart, 

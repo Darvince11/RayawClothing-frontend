@@ -5,13 +5,14 @@ import { useShop } from '../context/MyShopContext';
 import { useGetPaymentHistoryByUserId } from '../services/payment-service';
 
 export default function PaymentsPage() {
-  const { user } = useShop();
+  const { user, isUserLoading } = useShop();
   const navigate = useNavigate();
   const {data:paymentHistory, isLoading}=useGetPaymentHistoryByUserId(9);
 
+  // Wait for the profile to load before deciding the visitor isn't logged in
   useEffect(() => {
-    if (!user) { navigate('/login'); return; }
-  }, [user, navigate]);
+    if (!isUserLoading && !user) { navigate('/login'); return; }
+  }, [user, isUserLoading, navigate]);
 
   const getStatusBadge = (status) => {
     return (

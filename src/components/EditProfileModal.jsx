@@ -4,9 +4,10 @@ import { X } from 'lucide-react';
 import { useUpdateUserDetails } from '../services/user-service';
 
 const EditProfileModal = ({ isOpen, onClose }) => {
-  const { user } = useShop();
-  const {mutateAsync}=useUpdateUserDetails()
+  const { user, showNotification } = useShop();
+  const {mutateAsync, isPending}=useUpdateUserDetails()
 
+  // Navbar mounts this modal only while it's open, so the form starts from the latest profile
   const [formData, setFormData] = useState({
     first_name: user?.first_name || '',
     last_name: user?.last_name || '',
@@ -15,13 +16,17 @@ const EditProfileModal = ({ isOpen, onClose }) => {
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const userData={...formData,email:user?.email}
-    mutateAsync(userData)
-
-    onClose(); 
+    try {
+      // On success the profile is re-fetched from GET /auth/user
+      await mutateAsync({...formData, email:user?.email})
+      showNotification("Profile updated!", "success")
+      onClose();
+    } catch (error) {
+      showNotification(error.response?.data?.message || "Could not update your profile. Please try again.", "error")
+    }
   };
 
   return (
@@ -67,8 +72,8 @@ const EditProfileModal = ({ isOpen, onClose }) => {
             <label className="block text-sm text-gray-400 mb-1">Phone Number</label>
             <input 
               type="tel" 
-              value={formData.phone}
-              onChange={(e) => setFormData({...formData, phone: e.target.value})}
+              value={formData.phone_number}
+              onChange={(e) => setFormData({...formData, phone_number: e.target.value})}
               className="w-full bg-[#2a2a2a] border border-white/10 rounded-lg p-3 text-white focus:border-yellow-400 outline-none transition"
               placeholder="+233..."
             />
@@ -92,11 +97,12 @@ const EditProfileModal = ({ isOpen, onClose }) => {
             >
               Cancel
             </button>
-            <button 
-              type="submit" 
-              className="flex-1 py-3 rounded-lg bg-yellow-400 text-black font-bold hover:bg-yellow-500 transition shadow-lg shadow-yellow-400/20"
+            <button
+              type="submit"
+              disabled={isPending}
+              className="flex-1 py-3 rounded-lg bg-yellow-400 text-black font-bold hover:bg-yellow-500 transition shadow-lg shadow-yellow-400/20 disabled:opacity-50"
             >
-              Save Changes
+              {isPending ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
         </form>

@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
+import { Mail, ArrowRight, Loader2 } from 'lucide-react';
 import { useShop } from '../context/MyShopContext';
+import PasswordInput from '../components/PasswordInput';
 
 export default function LoginPage() {
   const { login } = useShop(); // Get login function
@@ -52,17 +53,12 @@ export default function LoginPage() {
           </div>
 
           {/* Password */}
-          <div className="relative group">
-            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-primary transition" size={20} />
-            <input 
-              required
-              type="password" 
-              placeholder="Password"
-              className="w-full bg-[#2C2C2C] text-white pl-12 pr-4 py-4 rounded-xl border border-transparent focus:border-primary/50 focus:bg-[#333] outline-none transition-all placeholder:text-gray-500"
-              value={formData.password}
-              onChange={(e) => setFormData({...formData, password: e.target.value})}
-            />
-          </div>
+          <PasswordInput
+            required
+            autoComplete="current-password"
+            value={formData.password}
+            onChange={(e) => setFormData({...formData, password: e.target.value})}
+          />
 
           <div className="text-right">
             <button type="button" className="text-xs text-gray-400 hover:text-white transition">Forgot Password?</button>
